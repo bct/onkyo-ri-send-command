@@ -1,7 +1,9 @@
-default: main
-
 CFLAGS=-Wall
 LDFLAGS=-llgpio
 
+all: onkyo-send-command
+
+onkyo-send-command: common.o
+
 clean:
-	rm -f main
+	rm -f *.o onkyo-send-command
