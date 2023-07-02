@@ -11,5 +11,7 @@ void build_wave(int command, lgPulse_t pulses[])
     } else {
       pulses[offset].delay = 1000;
     }
+
+    command = command << 1;
   }
 }
