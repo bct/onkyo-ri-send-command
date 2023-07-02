@@ -5,6 +5,7 @@
 
 int OUT_GPIO = 26; // GPIO26
 
+// (1 + 12 + 1) * 2
 #define PULSE_COUNT 28
 
 #define LFLAGS 0
@@ -48,16 +49,11 @@ lgPulse_t pulses[PULSE_COUNT] = {
   {0, -1, 40000},
 };
 
-int main(int argc, char *argv[])
+void build_wave(int command, lgPulse_t pulses[])
 {
-  int h;
-  double start, end;
-  int total = 0;
-
-  // construct the command wave
   for (int i=0; i<12; i++)
   {
-    int offset = 2 + 2*i + 1;
+    int offset = (1 + i) * 2 + 1;
 
     if ((COMMAND & 2048) != 0) {
       pulses[offset].delay = 2000;
@@ -65,25 +61,33 @@ int main(int argc, char *argv[])
       pulses[offset].delay = 1000;
     }
   }
+}
+
+int main(int argc, char *argv[])
+{
+  int h;
+  int err;
+
+  // construct the command wave
+  build_wave(COMMAND, pulses);
 
   h = lgGpiochipOpen(0);
 
-  if (h >= 0)
+  if (h < 0)
   {
-    if (lgGpioClaimOutput(h, LFLAGS, OUT_GPIO, 0) == LG_OKAY)
-    {
-      lgTxWave(h, OUT_GPIO, PULSE_COUNT, pulses);
-
-      start = lguTime();
-
-      while (lgTxBusy(h, OUT_GPIO, LG_TX_WAVE)) lguSleep(0.01);
-
-      end = lguTime();
-
-      printf("%d pulses took %.1f seconds (exp=%.1f)\n",
-          PULSE_COUNT, end-start, total/1e6);
-    }
-
-    lgGpiochipClose(h);
+    printf("opening gpiochip failed: %s (%d)\n", lguErrorText(h), h);
+    exit(1);
   }
+
+  if ((err = lgGpioClaimOutput(h, LFLAGS, OUT_GPIO, 0)) != LG_OKAY)
+  {
+    printf("claiming gpio for output failed: %s (%d)\n", lguErrorText(err), err);
+    exit(1);
+  }
+
+  lgTxWave(h, OUT_GPIO, PULSE_COUNT, pulses);
+
+  while (lgTxBusy(h, OUT_GPIO, LG_TX_WAVE)) lguSleep(0.01);
+
+  lgGpiochipClose(h);
 }
