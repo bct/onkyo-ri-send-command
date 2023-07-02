@@ -11,6 +11,6 @@ pkgs.stdenv.mkDerivation {
   installPhase = ''
     mkdir -p $out/bin
 
-    install -m 0755 onkyo-send-command $out/bin
+    install -m 0755 onkyo-ri-send-command $out/bin
   '';
 }
