@@ -1,9 +1,8 @@
 { pkgs ? import <nixpkgs> {}, }:
-{
-  myProject = pkgs.stdenv.mkDerivation {
-    name = "onkyo-lgpio";
-    buildInputs = with pkgs; [
-      (callPackage ./lgpio.nix { })
-    ];
-  };
+
+pkgs.stdenv.mkDerivation {
+  name = "onkyo-ri-send-command";
+  buildInputs = with pkgs; [
+    (callPackage ./liblgpio.nix { })
+  ];
 }
