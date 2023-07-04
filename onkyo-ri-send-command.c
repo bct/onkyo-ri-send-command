@@ -9,7 +9,24 @@ int OUT_GPIO = 26; // GPIO26
 
 #define LFLAGS 0
 
-lgPulse_t pulses[ONKYO_PULSE_COUNT] = ONKYO_PULSE_TEMPLATE;
+int parse_command(char *command_str) {
+  int result;
+  char *tail;
+
+  result = strtol(command_str, &tail, 0);
+
+  if (*tail != '\0') {
+    printf("\"%s\" is not a valid integer (%s)\n", command_str, tail);
+    exit(1);
+  }
+
+  if (result < 0 || result > ONKYO_MAX_COMMAND) {
+    printf("command %X is outside the expected range (0-%X)\n", result, ONKYO_MAX_COMMAND);
+    exit(1);
+  }
+
+  return result;
+}
 
 int main(int argc, char *argv[]) {
   if (argc != 2) {
@@ -17,23 +34,13 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  char *tail;
-  int command = strtol(argv[1], &tail, 0);
-
-  if (*tail != '\0') {
-    printf("\"%s\" is not a valid integer (%s)\n", argv[1], tail);
-    exit(1);
-  }
-
-  if (command < 0 || command > ONKYO_MAX_COMMAND) {
-    printf("command %X is outside the expected range (0-%X)\n", command, ONKYO_MAX_COMMAND);
-    exit(1);
-  }
+  int command = parse_command(argv[1]);
 
   int err;
 
   // construct the command wave
-  build_wave(command, pulses);
+  lgPulse_t command_pulses[ONKYO_COMMAND_PULSE_COUNT];
+  onkyo_build_command_pulses(command, command_pulses);
 
   int h = lgGpiochipOpen(0);
 
@@ -47,9 +54,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  lgTxWave(h, OUT_GPIO, ONKYO_PULSE_COUNT, pulses);
-
-  while (lgTxBusy(h, OUT_GPIO, LG_TX_WAVE)) lguSleep(0.01);
+  onkyo_send_command_pulses(h, OUT_GPIO, command_pulses);
 
   lgGpiochipClose(h);
 }
