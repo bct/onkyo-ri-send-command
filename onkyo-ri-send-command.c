@@ -29,18 +29,21 @@ int parse_command(char *command_str) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 2) {
-    printf("usage: %s INT_LITERAL\n", argv[0]);
+  if (argc < 2) {
+    printf("usage: %s INT_LITERAL [INT_LITERAL...]\n", argv[0]);
     exit(1);
   }
 
-  int command = parse_command(argv[1]);
+  int command_count = argc - 1;
+  int commands[command_count];
+
+  for (int i = 0; i < command_count; i++) {
+    commands[i] = parse_command(argv[i+1]);
+  }
 
   int err;
 
-  // construct the command wave
   lgPulse_t command_pulses[ONKYO_COMMAND_PULSE_COUNT];
-  onkyo_build_command_pulses(command, command_pulses);
 
   int h = lgGpiochipOpen(0);
 
@@ -54,7 +57,10 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  onkyo_send_command_pulses(h, OUT_GPIO, command_pulses);
+  for (int i = 0; i < command_count; i++) {
+    onkyo_build_command_pulses(commands[i], command_pulses);
+    onkyo_send_command_pulses(h, OUT_GPIO, command_pulses);
+  }
 
   lgGpiochipClose(h);
 }
