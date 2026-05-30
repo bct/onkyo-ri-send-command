@@ -1,11 +1,13 @@
-{ pkgs ? import <nixpkgs> {}, }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
 pkgs.stdenv.mkDerivation {
   name = "onkyo-ri-send-command";
   src = ./.;
 
   buildInputs = with pkgs; [
-    (callPackage ./liblgpio.nix { })
+    lgpio
   ];
 
   installPhase = ''
